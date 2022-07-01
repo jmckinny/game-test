@@ -1,7 +1,8 @@
+use std::f32::consts::PI;
+use std::ops::Rem;
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::prelude::*;
 use bevy::sprite::collide_aabb::collide;
-use bevy::utils::tracing::field::debug;
 
 fn main() {
     App::new()
@@ -18,6 +19,7 @@ struct Ship {
     dx: f32,
     dy: f32,
     spin: f32,
+    angle:f32
 }
 #[derive(Component)]
 struct Bullet;
@@ -38,6 +40,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             dx: 0.,
             dy: 0.,
             spin: 0.,
+            angle: 90.
         });
     commands
         .spawn_bundle(SpriteBundle {
@@ -51,8 +54,8 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Bullet);
 }
 
-const MAX_SPEED: f32 = 50.;
-const ACCEL: f32 = 15.;
+const MAX_SPEED: f32 = 100.;
+const ACCEL: f32 = 75.;
 const MAX_SPIN:f32 = 10.;
 const SPIN: f32 = 1.;
 fn movement(
@@ -62,21 +65,16 @@ fn movement(
 ) {
     for (mut ship, mut transform) in sprite_position.iter_mut() {
         if keyboard_input.pressed(KeyCode::W) {
-            ship.dy += ACCEL * time.delta_seconds();
-        }
-        if keyboard_input.pressed(KeyCode::S) {
-            ship.dy -= ACCEL * time.delta_seconds();
+            
+            
+            ship.dx += (ship.angle*PI/180.).cos()*ACCEL*time.delta_seconds();
+            ship.dy += (ship.angle*PI/180.).sin()*ACCEL*time.delta_seconds();
+            println!("Heading: {} dx:{} dy:{}",ship.angle, ship.dx,ship.dy);
         }
         if keyboard_input.pressed(KeyCode::A) {
-            ship.dx -= ACCEL * time.delta_seconds();
-        }
-        if keyboard_input.pressed(KeyCode::D) {
-            ship.dx += ACCEL * time.delta_seconds();
-        }
-        if keyboard_input.pressed(KeyCode::Q) {
             ship.spin += SPIN * time.delta_seconds();
         }
-        if keyboard_input.pressed(KeyCode::E) {
+        if keyboard_input.pressed(KeyCode::D) {
             ship.spin -= SPIN * time.delta_seconds();
         }
 
@@ -97,10 +95,11 @@ fn movement(
         } else if ship.spin < -MAX_SPIN {
             ship.spin = -MAX_SPIN
         }
-
+        let offset = ship.spin * time.delta_seconds();
+        ship.angle = (ship.angle + (offset * (180./PI))).rem(360.);
         transform.translation.y += ship.dy * time.delta_seconds();
         transform.translation.x += ship.dx * time.delta_seconds();
-        transform.rotate(Quat::from_rotation_z(ship.spin * time.delta_seconds()))
+        transform.rotate(Quat::from_rotation_z(offset));
     }
 }
 
@@ -118,7 +117,7 @@ fn collided(
         )
         .is_some()
         {
-            println!("Collision detected");
+            //println!("Collision detected");
         }
     }
 }
