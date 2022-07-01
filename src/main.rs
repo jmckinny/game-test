@@ -17,7 +17,7 @@ fn main() {
 struct Ship {
     dx: f32,
     dy: f32,
-    heading: f32,
+    spin: f32,
 }
 #[derive(Component)]
 struct Bullet;
@@ -37,14 +37,13 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         .insert(Ship {
             dx: 0.,
             dy: 0.,
-            heading: 90.,
+            spin: 0.,
         });
     commands
         .spawn_bundle(SpriteBundle {
             texture: asset_server.load("bullet.png"),
             transform: Transform::from_xyz(0., 0., 0.),
             sprite: Sprite {
-                custom_size: Some(Vec2::new(25., 25.)),
                 ..default()
             },
             ..default()
@@ -53,7 +52,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 }
 
 const MAX_SPEED: f32 = 50.;
-
+const ACCEL: f32 = 15.;
+const MAX_SPIN:f32 = 10.;
+const SPIN: f32 = 1.;
 fn movement(
     time: Res<Time>,
     mut sprite_position: Query<(&mut Ship, &mut Transform)>,
@@ -61,38 +62,45 @@ fn movement(
 ) {
     for (mut ship, mut transform) in sprite_position.iter_mut() {
         if keyboard_input.pressed(KeyCode::W) {
-            ship.dy += 10.;
-            if ship.dy > MAX_SPEED {
-                ship.dy -= 10.
-            }
+            ship.dy += ACCEL * time.delta_seconds();
         }
         if keyboard_input.pressed(KeyCode::S) {
-            ship.dy -= 10.;
-            if ship.dy < -MAX_SPEED {
-                ship.dy += 10.
-            }
+            ship.dy -= ACCEL * time.delta_seconds();
         }
         if keyboard_input.pressed(KeyCode::A) {
-            ship.dx -= 10.;
-            if ship.dx < -MAX_SPEED {
-                ship.dx += 10.
-            }
+            ship.dx -= ACCEL * time.delta_seconds();
         }
         if keyboard_input.pressed(KeyCode::D) {
-            ship.dx += 10.;
-            if ship.dx > MAX_SPEED {
-                ship.dx -= 10.
-            }
+            ship.dx += ACCEL * time.delta_seconds();
+        }
+        if keyboard_input.pressed(KeyCode::Q) {
+            ship.spin += SPIN * time.delta_seconds();
+        }
+        if keyboard_input.pressed(KeyCode::E) {
+            ship.spin -= SPIN * time.delta_seconds();
         }
 
-        if transform.translation.y > 200. || transform.translation.y < -200. {
-            ship.dy = 0.;
+        if ship.dx > MAX_SPEED {
+            ship.dx = MAX_SPEED;
+        } else if ship.dx < -MAX_SPEED {
+            ship.dx = -MAX_SPEED
         }
-        if transform.translation.x > 200. || transform.translation.x < -200. {
-            ship.dx = 0.;
+
+        if ship.dy > MAX_SPEED {
+            ship.dy = MAX_SPEED;
+        } else if ship.dy < -MAX_SPEED {
+            ship.dy = -MAX_SPEED
         }
+
+        if ship.spin > MAX_SPIN {
+            ship.spin = MAX_SPIN;
+        } else if ship.spin < -MAX_SPIN {
+            ship.spin = -MAX_SPIN
+        }
+
         transform.translation.y += ship.dy * time.delta_seconds();
         transform.translation.x += ship.dx * time.delta_seconds();
+        transform.rotate(Quat::from_rotation_z(ship.spin * time.delta_seconds()))
     }
 }
 
@@ -106,11 +114,11 @@ fn collided(
             bullet_transform.translation,
             Vec2::new(25., 25.),
             ship_transform.translation,
-            Vec2::new(100.,100.),
-        ).is_some() {
+            Vec2::new(100., 100.),
+        )
+        .is_some()
+        {
             println!("Collision detected");
-        } else{
-            println!("Not colliding")
         }
     }
 }
