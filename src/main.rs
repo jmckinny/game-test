@@ -2,15 +2,18 @@ use std::f32::consts::PI;
 use std::ops::Rem;
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::prelude::*;
-use bevy::sprite::collide_aabb::collide;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .insert_resource(ClearColor(Color::rgb(0.4, 0.4, 0.4)))
+        .insert_resource(WindowDescriptor{
+            title: "Game Test".to_string(),
+            ..default()
+        })
         .add_startup_system(setup)
         .add_system(movement)
-        .add_system(collided)
         .run();
 }
 
@@ -42,22 +45,12 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             spin: 0.,
             angle: 90.
         });
-    commands
-        .spawn_bundle(SpriteBundle {
-            texture: asset_server.load("bullet.png"),
-            transform: Transform::from_xyz(0., 0., 0.),
-            sprite: Sprite {
-                ..default()
-            },
-            ..default()
-        })
-        .insert(Bullet);
 }
 
-const MAX_SPEED: f32 = 100.;
-const ACCEL: f32 = 75.;
+const MAX_SPEED: f32 = 300.;
+const ACCEL: f32 = 300.;
 const MAX_SPIN:f32 = 10.;
-const SPIN: f32 = 1.;
+const SPIN: f32 = 10.;
 fn movement(
     time: Res<Time>,
     mut sprite_position: Query<(&mut Ship, &mut Transform)>,
@@ -65,11 +58,9 @@ fn movement(
 ) {
     for (mut ship, mut transform) in sprite_position.iter_mut() {
         if keyboard_input.pressed(KeyCode::W) {
-            
-            
             ship.dx += (ship.angle*PI/180.).cos()*ACCEL*time.delta_seconds();
             ship.dy += (ship.angle*PI/180.).sin()*ACCEL*time.delta_seconds();
-            println!("Heading: {} dx:{} dy:{}",ship.angle, ship.dx,ship.dy);
+            //println!("Heading: {} dx:{} dy:{}",ship.angle, ship.dx,ship.dy);
         }
         if keyboard_input.pressed(KeyCode::A) {
             ship.spin += SPIN * time.delta_seconds();
@@ -100,24 +91,5 @@ fn movement(
         transform.translation.y += ship.dy * time.delta_seconds();
         transform.translation.x += ship.dx * time.delta_seconds();
         transform.rotate(Quat::from_rotation_z(offset));
-    }
-}
-
-fn collided(
-    mut ship_pos: Query<(&mut Ship, &Transform), With<Ship>>,
-    mut bullets: Query<(&mut Bullet, &Transform), With<Bullet>>,
-) {
-    let (ship, ship_transform) = ship_pos.single_mut();
-    for (mut bullet, bullet_transform) in bullets.iter_mut() {
-        if collide(
-            bullet_transform.translation,
-            Vec2::new(25., 25.),
-            ship_transform.translation,
-            Vec2::new(100., 100.),
-        )
-        .is_some()
-        {
-            //println!("Collision detected");
-        }
     }
 }

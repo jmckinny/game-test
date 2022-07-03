@@ -6,10 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { version = "0.7.0", features = ["dynamic","wayland"] }
+bevy = { version = "0.7.0", features = ["wayland"] }
 
 [profile.dev]
 opt-level = 1
 
 [profile.dev.package."*"]
 opt-level = 3
+
+[target.wasm32-unknown-unknown]
+runner = "wasm-server-runner"
