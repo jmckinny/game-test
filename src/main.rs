@@ -1,14 +1,14 @@
-use std::f32::consts::PI;
-use std::ops::Rem;
 use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
 use bevy::prelude::*;
+use std::f32::consts::PI;
+use std::ops::Rem;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .insert_resource(ClearColor(Color::rgb(0.4, 0.4, 0.4)))
-        .insert_resource(WindowDescriptor{
+        .insert_resource(WindowDescriptor {
             title: "Game Test".to_string(),
             ..default()
         })
@@ -22,7 +22,7 @@ struct Ship {
     dx: f32,
     dy: f32,
     spin: f32,
-    angle:f32
+    angle: f32,
 }
 #[derive(Component)]
 struct Bullet;
@@ -43,13 +43,13 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
             dx: 0.,
             dy: 0.,
             spin: 0.,
-            angle: 90.
+            angle: 90.,
         });
 }
 
 const MAX_SPEED: f32 = 300.;
 const ACCEL: f32 = 300.;
-const MAX_SPIN:f32 = 10.;
+const MAX_SPIN: f32 = 10.;
 const SPIN: f32 = 10.;
 fn movement(
     time: Res<Time>,
@@ -58,8 +58,8 @@ fn movement(
 ) {
     for (mut ship, mut transform) in sprite_position.iter_mut() {
         if keyboard_input.pressed(KeyCode::W) {
-            ship.dx += (ship.angle*PI/180.).cos()*ACCEL*time.delta_seconds();
-            ship.dy += (ship.angle*PI/180.).sin()*ACCEL*time.delta_seconds();
+            ship.dx += (ship.angle * PI / 180.).cos() * ACCEL * time.delta_seconds();
+            ship.dy += (ship.angle * PI / 180.).sin() * ACCEL * time.delta_seconds();
             //println!("Heading: {} dx:{} dy:{}",ship.angle, ship.dx,ship.dy);
         }
         if keyboard_input.pressed(KeyCode::A) {
@@ -87,7 +87,7 @@ fn movement(
             ship.spin = -MAX_SPIN
         }
         let offset = ship.spin * time.delta_seconds();
-        ship.angle = (ship.angle + (offset * (180./PI))).rem(360.);
+        ship.angle = (ship.angle + (offset * (180. / PI))).rem(360.);
         transform.translation.y += ship.dy * time.delta_seconds();
         transform.translation.x += ship.dx * time.delta_seconds();
         transform.rotate(Quat::from_rotation_z(offset));
